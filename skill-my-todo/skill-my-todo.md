@@ -15,9 +15,33 @@ Jira, Slack, Confluence, Google Calendar을 검색하여 오늘의 할일을 중
 
 ## 실행 절차
 
-### Step 1: 멀티 플랫폼 동시 검색
+### Step 1: 멀티 플랫폼 동시 검색 (오늘 + 어제)
 
-아래 4개 검색을 **병렬**로 실행한다:
+아래 검색을 **병렬**로 실행한다:
+
+#### 1-0. 어제 한 일 검색 (전일 활동 요약용)
+
+대상 날짜의 전일(어제)에 대해 아래를 병렬 검색한다:
+
+**Google Calendar**: `list_events`로 어제의 이벤트 조회
+- 어제 참석/주관한 미팅 목록
+
+**Slack**: `slack_search_public_and_private`로 어제 내가 보낸 메시지 검색
+- 검색어: `from:<@U04NNHQJDA8> on:{어제 날짜}`
+- 내가 어제 어떤 채널에서 어떤 소통을 했는지 파악
+
+**Jira**: `searchJiraIssuesUsingJql`
+- JQL: `assignee = currentUser() AND updated >= "{어제}" AND updated < "{오늘}"`
+- 어제 업데이트한 이슈 목록
+
+**Confluence**: `searchConfluenceUsingCql`
+- CQL: `contributor = currentUser() AND lastModified >= "{어제}" AND lastModified < "{오늘}"`
+- 어제 수정/작성한 페이지 목록
+
+**로컬 파일**: `find ~/Documents/지식창고 -type f -mtime -2` 등으로 어제 변경된 로컬 문서 확인
+
+검색 결과를 종합하여 **"어제 한 일"** 섹션을 `- [x]` (완료 체크) 형식으로 작성한다.
+카테고리: 미팅/일정, Slack 소통/처리, Confluence 문서 작업, Jira, 로컬 문서
 
 #### 1-1. Google Calendar 검색
 
@@ -40,9 +64,11 @@ assignee = currentUser() AND status != Done ORDER BY priority DESC
 #### 1-3. Slack 검색
 
 `slack_search_public_and_private`로 최근 3일간 나에게 관련된 메시지 검색:
-- 검색어: `to:me after:{3일전 날짜}`
-- 추가 검색어: `@sy.im after:{3일전 날짜}` (멘션된 메시지)
+- 검색어 1: `to:me after:{3일전 날짜}`
+- 검색어 2: `<@U04NNHQJDA8> after:{3일전 날짜}` (멘션된 메시지)
+- 검색어 3: `성용 after:{3일전 날짜} -from:<@U04NNHQJDA8>` (이름으로 언급된 메시지)
 - 각 메시지의 핵심 내용과 액션 아이템 추출
+- **Slack 소통 요약 섹션**에 사용할 메시지별 요약과 채널명 정리
 
 #### 1-4. Confluence 검색
 
@@ -82,7 +108,30 @@ contributor = currentUser() AND lastModified >= "{3일전 날짜}"
 ```markdown
 # 오늘의 할일 — {대상날짜 YYYY-MM-DD (요일)}
 
-> **요약**: 미팅 N건, 액션아이템 N건, 참고사항 N건
+> **요약**: 미팅 N건, 액션아이템 N건, 참고사항 N건, Slack 소통 N건
+
+---
+
+## 어제 한 일 — {전일 YYYY-MM-DD (요일)}
+
+### 미팅/일정 (N건)
+
+- [x] **미팅명** — HH:MM-HH:MM, 역할(주관/참석), 장소
+- [x] **미팅명** — HH:MM-HH:MM, 참석
+
+### Slack 소통/처리
+
+- [x] **소통 내용 요약** — 상대방/채널, 처리 결과
+- [x] **소통 내용 요약** — 상대방/채널, 처리 결과
+
+### Confluence 문서 작업
+
+- [x] **"페이지 제목" 작성/수정** — 상세 내용
+
+### Jira
+
+- [x] **이슈키 — 이슈 제목** — 상태 변경/코멘트 등
+- (업데이트된 이슈가 없으면 "어제 업데이트된 담당 이슈 없음" 표시)
 
 ---
 
@@ -96,25 +145,35 @@ contributor = currentUser() AND lastModified >= "{3일전 날짜}"
 
 ## 중요도 1 — 오늘 반드시 처리
 
-| # | 할일 | 시간/출처 | 상세 |
-|---|------|----------|------|
-| 1 | **할일 내용** | 출처 | 상세 설명 |
+- [ ] **할일 내용** — 시간/출처 : 상세 설명
+- [ ] **할일 내용** — 출처 : 상세 설명
 
 ---
 
 ## 중요도 2 — 오늘 중 확인/후속 조치
 
-| # | 할일 | 출처 | 상세 |
-|---|------|------|------|
-| 1 | **할일 내용** | 출처 | 상세 설명 |
+- [ ] **할일 내용** — 출처 : 상세 설명
 
 ---
 
 ## 중요도 3 — 인지 사항
 
-| # | 사항 | 출처 | 상세 |
-|---|------|------|------|
-| 1 | 내용 | 출처 | 상세 설명 |
+- [ ] **인지 사항** — 출처 : 상세 설명
+
+---
+
+## Slack 소통 요약
+
+### 카테고리명 (N건) — #채널명
+
+- [ ] **발신자명** — 요약 내용 (관련 티켓/이슈)
+- [ ] **발신자명** — 요약 내용
+
+### 카테고리명 (N건)
+
+- [ ] **발신자명** — 요약 내용 — #채널명
+
+(Slack 메시지를 주제별로 그룹핑: 승인요청, 감사/보안, 인프라/개발, 기타 소통 등)
 
 ---
 
@@ -130,7 +189,7 @@ contributor = currentUser() AND lastModified >= "{3일전 날짜}"
 
 ## 검색 출처
 - Google Calendar: {대상날짜} 일정
-- Slack: 최근 3일 메시지
+- Slack: 최근 3일 메시지 (멘션 N건 + 추가 검색 N건)
 - Confluence: 최근 3일 수정 페이지
 - Jira: 담당 이슈
 ```

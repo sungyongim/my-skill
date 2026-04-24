@@ -1,6 +1,6 @@
 # skill-my-todo
 
-매일 아침 **Jira, Slack, Confluence, Google Calendar**를 동시에 검색하여 오늘의 할일을 **중요도별로 분류**하고, 결과를 **Confluence 페이지**와 **로컬 파일**로 자동 저장하는 Claude Code 스킬입니다.
+매일 아침 **Jira, Slack, Confluence, Google Calendar, 로컬 파일**을 동시에 검색하여 **어제 한 일 요약** + **오늘의 할일을 중요도별로 분류** + **Slack 소통 요약**까지 정리하고, 결과를 **Confluence 페이지**와 **로컬 파일**로 자동 저장하는 Claude Code 스킬입니다.
 
 ---
 
@@ -14,15 +14,19 @@
 
 ```
 Google Calendar ─┐
-Jira            ─┤                          ┌─ Confluence 페이지
-Slack           ─┼─▶ Claude Code 분석/분류 ─┤
-Confluence      ─┘                          └─ 로컬 마크다운 파일
+Jira            ─┤                          ┌─ 어제 한 일 요약
+Slack           ─┼─▶ Claude Code 분석/분류 ─┤─ 오늘 할일 (중요도별 체크리스트)
+Confluence      ─┤                          ├─ Slack 소통 요약
+로컬 파일        ─┘                          ├─ Confluence 페이지
+                                            └─ 로컬 마크다운 파일
 ```
 
-1. 4개 플랫폼을 **병렬 검색** (대상일 기준 최근 3일)
-2. 수집된 정보를 **중요도 3단계**로 자동 분류
-3. **시간순 하루 흐름표** 생성
-4. Confluence 페이지 생성 + 로컬 파일 저장
+1. 5개 소스를 **병렬 검색** (대상일 기준 최근 3일 + 전일 활동)
+2. **어제 한 일** 자동 요약 (미팅, Slack 소통, 문서 작업, Jira)
+3. 수집된 정보를 **중요도 3단계**로 자동 분류 (체크박스 형식)
+4. **Slack 소통 요약** — 멘션/DM 메시지를 주제별 그룹핑
+5. **시간순 하루 흐름표** 생성
+6. Confluence 페이지 생성 + 로컬 파일 저장
 
 ---
 
@@ -143,15 +147,25 @@ cat ~/.claude/scripts/logs/daily-todo-$(date +%Y-%m-%d).log
 | 항목 | 값 |
 |------|---|
 | API | `slack_search_public_and_private` |
-| 검색 1 | `to:me after:{3일전}` (DM 및 멘션) |
-| 검색 2 | `@{사용자명} after:{3일전}` (채널 멘션) |
+| 오늘 할일 검색 1 | `to:me after:{3일전}` (DM 및 멘션) |
+| 오늘 할일 검색 2 | `<@U04NNHQJDA8> after:{3일전}` (멘션 메시지) |
+| 오늘 할일 검색 3 | `성용 after:{3일전} -from:<@U04NNHQJDA8>` (이름 언급) |
+| 어제 한 일 검색 | `from:<@U04NNHQJDA8> on:{전일}` (내가 보낸 메시지) |
 
 ### Confluence
 
 | 항목 | 값 |
 |------|---|
 | API | `searchConfluenceUsingCql` |
-| CQL | `contributor = currentUser() AND lastModified >= "{3일전}"` |
+| 오늘 할일 CQL | `contributor = currentUser() AND lastModified >= "{3일전}"` |
+| 어제 한 일 CQL | `contributor = currentUser() AND lastModified >= "{전일}" AND lastModified < "{대상일}"` |
+
+### 로컬 파일
+
+| 항목 | 값 |
+|------|---|
+| 명령 | `find ~/Documents/지식창고 -type f -mtime -2` |
+| 용도 | 어제 변경된 로컬 문서 확인 |
 
 ---
 
@@ -206,11 +220,13 @@ cat ~/.claude/scripts/logs/daily-todo-$(date +%Y-%m-%d).log
 
 ```
 오늘의 할일 — 2026-04-24 (목)
-├── 요약 (미팅 N건, 액션아이템 N건, 참고사항 N건)
+├── 요약 (미팅 N건, 액션아이템 N건, 참고사항 N건, Slack 소통 N건)
+├── 어제 한 일 (미팅/일정, Slack 소통/처리, Confluence 문서, Jira) ← NEW
 ├── 오늘 일정 (시간순 테이블)
-├── 중요도 1 — 오늘 반드시 처리
-├── 중요도 2 — 오늘 중 확인/후속 조치
-├── 중요도 3 — 인지 사항
+├── 중요도 1 — 오늘 반드시 처리 (체크박스)
+├── 중요도 2 — 오늘 중 확인/후속 조치 (체크박스)
+├── 중요도 3 — 인지 사항 (체크박스)
+├── Slack 소통 요약 (주제별 그룹핑, 체크박스) ← NEW
 ├── 오늘 하루 흐름 (타임라인)
 └── 검색 출처
 ```
