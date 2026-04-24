@@ -9,6 +9,7 @@
 | 스킬 | 설명 | 슬래시 커맨드 |
 |------|------|--------------|
 | [skill-my-todo](./skill-my-todo/) | 멀티 플랫폼 검색 기반 오늘의 할일 자동 생성 | `/skill-my-todo` |
+| [skill-summary-team-weekly](./skill-summary-team-weekly/) | 핀테크트라이브 개발/기획 위클리 통합 요약 및 Confluence 업로드 자동화 | `/summary-team-weekly` |
 
 ## 사전 요구 사항
 
