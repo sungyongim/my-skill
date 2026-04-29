@@ -143,7 +143,7 @@ allowed-tools: Bash Read Write Edit Glob Grep
 아래 경로에 markdown 파일로 저장한다:
 
 ```
-/Users/sy.im/Documents/지식창고/위클리/팀/{대상날짜}.md
+/Users/sy.im/Documents/내창고/위클리/팀/{대상날짜}.md
 ```
 
 파일 전체 구조:

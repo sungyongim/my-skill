@@ -8,9 +8,9 @@ export HOME="/Users/sy.im"
 TODAY=$(date +%Y-%m-%d)
 LOG_DIR="$HOME/.claude/scripts/logs"
 LOG_FILE="$LOG_DIR/weekly-summary-team-${TODAY}.log"
-OUTPUT_FILE="$HOME/Documents/지식창고/위클리/팀/${TODAY}.md"
+OUTPUT_FILE="$HOME/Documents/내창고/위클리/팀/${TODAY}.md"
 
-mkdir -p "$LOG_DIR"
+mkdir -p "$LOG_DIR" "$(dirname "$OUTPUT_FILE")"
 
 echo "[$(date)] Start summary-team-weekly for ${TODAY}" >> "$LOG_FILE"
 

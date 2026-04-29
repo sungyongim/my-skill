@@ -209,7 +209,7 @@ launchctl kickstart -k gui/$(id -u)/com.user.daily-todo
 
 | 항목 | 값 |
 |------|---|
-| 명령 | `find ~/Documents/지식창고 -type f -mtime -2` |
+| 명령 | `find ~/Documents/내창고 -type f -mtime -2` |
 | 용도 | 어제 변경된 로컬 문서 확인 |
 
 ---
@@ -279,7 +279,7 @@ launchctl kickstart -k gui/$(id -u)/com.user.daily-todo
 ### 로컬 파일
 
 ```
-~/Documents/지식창고/할일/YYYY-MM-DD.md
+~/Documents/내창고/할일/YYYY-MM-DD.md
 ```
 
 Confluence 페이지와 동일한 내용을 로컬에도 저장합니다.

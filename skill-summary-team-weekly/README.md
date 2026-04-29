@@ -40,5 +40,5 @@ claude --dangerously-skip-permissions -p "/summary-team-weekly"
 `weekly-summary-team.sh`는 다음 순서로 동작합니다.
 
 1. `/summary-team-weekly YYYY-MM-DD` 실행
-2. 생성된 파일(`/Users/sy.im/Documents/지식창고/위클리/팀/YYYY-MM-DD.md`)을 읽음
+2. 생성된 파일(`/Users/sy.im/Documents/내창고/위클리/팀/YYYY-MM-DD.md`)을 읽음
 3. Confluence `TO-DO`(parent: `5858689612`) 하위에 `YYYY-MM-DD-summary-team-weekly` 제목으로 페이지 생성(동일 제목 있으면 업데이트)
