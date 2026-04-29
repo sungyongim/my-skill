@@ -37,8 +37,8 @@ claude --dangerously-skip-permissions -p "/summary-team-weekly"
 
 ## 자동화 동작
 
-`weekly-summary-team.sh`는 다음 순서로 동작합니다.
+매주 목요일 09:00에 LaunchAgent가 `weekly-summary-team.sh`를 실행하면 `/summary-team-weekly YYYY-MM-DD` 한 번 호출로 아래가 모두 진행됩니다.
 
-1. `/summary-team-weekly YYYY-MM-DD` 실행
-2. 생성된 파일(`/Users/sy.im/Documents/내창고/위클리/팀/YYYY-MM-DD.md`)을 읽음
-3. Confluence `TO-DO`(parent: `5858689612`) 하위에 `YYYY-MM-DD-summary-team-weekly` 제목으로 페이지 생성(동일 제목 있으면 업데이트)
+1. **로컬 파일 저장** — `/Users/sy.im/Documents/내창고/위클리/팀/YYYY-MM-DD.md`
+2. **Confluence 페이지 생성/업데이트** — `TO-DO`(parent: `5858689612`) 하위에 `YYYY-MM-DD-summary-team-weekly` 제목 (동일 제목 있으면 업데이트)
+3. **JDP 티켓 댓글 추가** — 매칭된 XPJPD 이슈에 위클리 요약 댓글
