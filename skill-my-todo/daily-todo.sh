@@ -1,5 +1,5 @@
 #!/bin/bash
-# 매일 09:00 실행 — Claude Code로 오늘의 할일 생성
+# 평일 09:00 실행 — Claude Code로 오늘의 할일 생성
 # cron: 0 9 * * 1-5 /Users/sy.im/.claude/scripts/daily-todo.sh
 
 export PATH="/opt/homebrew/bin:$PATH"

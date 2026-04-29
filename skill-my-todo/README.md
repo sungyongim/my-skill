@@ -36,8 +36,10 @@ Confluence      ─┤                          ├─ Slack 소통 요약
 skill-my-todo/
 ├── README.md              # 이 문서
 ├── skill-my-todo.md       # Claude Code 스킬 정의 (~/.claude/commands/에 배치)
-└── daily-todo.sh          # cron 자동 실행 스크립트 (~/.claude/scripts/에 배치)
+└── daily-todo.sh          # 자동 실행 스크립트 (~/.claude/scripts/에 배치)
 ```
+
+자동 실행은 macOS의 **launchd**(LaunchAgent)로 스케줄링합니다. plist는 `~/Library/LaunchAgents/`에 둡니다.
 
 ---
 
@@ -59,18 +61,54 @@ cp daily-todo.sh ~/.claude/scripts/
 chmod +x ~/.claude/scripts/daily-todo.sh
 ```
 
-### 2. cron 등록 (자동 실행)
+### 2. launchd 등록 (자동 실행)
+
+> **왜 cron 대신 launchd인가?**
+> macOS의 cron은 사용자 Keychain에 접근할 수 없어, `claude` CLI 인증 토큰을 읽지 못합니다(`Not logged in · Please run /login` 에러). launchd LaunchAgent는 사용자 GUI 세션에서 동작하므로 Keychain에 정상 접근 가능합니다.
 
 ```bash
-# 매일 09:00 실행
-(crontab -l 2>/dev/null; echo "0 9 * * * ~/.claude/scripts/daily-todo.sh") | crontab -
+mkdir -p ~/Library/LaunchAgents ~/.claude/scripts/logs
 
-# 평일만 실행하려면
-(crontab -l 2>/dev/null; echo "0 9 * * 1-5 ~/.claude/scripts/daily-todo.sh") | crontab -
+cat > ~/Library/LaunchAgents/com.user.daily-todo.plist <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.daily-todo</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/USERNAME/.claude/scripts/daily-todo.sh</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key><integer>9</integer>
+        <key>Minute</key><integer>0</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/USERNAME/.claude/scripts/logs/daily-todo-launchd.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/USERNAME/.claude/scripts/logs/daily-todo-launchd.err.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key><string>/Users/USERNAME</string>
+    </dict>
+</dict>
+</plist>
+EOF
 
-# 등록 확인
-crontab -l
+# USERNAME을 실제 macOS 사용자명으로 치환
+sed -i '' "s|USERNAME|$(whoami)|g" ~/Library/LaunchAgents/com.user.daily-todo.plist
+
+# 로드
+launchctl load ~/Library/LaunchAgents/com.user.daily-todo.plist
+
+# 등록 확인 (두 번째 컬럼이 마지막 exit code, 0이면 정상)
+launchctl list | grep daily-todo
 ```
+
+평일(월~금)만 실행하고 싶다면 `StartCalendarInterval`을 5개의 dict 배열로 작성합니다 — 자세한 형식은 아래 [launchd 관리](#launchd-관리) 섹션 참고.
 
 ### 3. (선택) GitHub 자동 동기화 Hook
 
@@ -110,16 +148,23 @@ Claude Code 대화에서 슬래시 커맨드로 실행합니다:
 /skill-my-todo 2026-04-25
 ```
 
-### 자동 실행 (cron)
+### 자동 실행 (launchd)
 
-설치 시 등록한 cron이 매일 09:00에 자동 실행합니다.
+설치 시 등록한 LaunchAgent가 매일 09:00에 자동 실행합니다.
 
 ```bash
-# 로그 확인
+# 로그 확인 (스크립트 자체 로그)
 cat ~/.claude/scripts/logs/daily-todo-$(date +%Y-%m-%d).log
+
+# launchd stdout/stderr 로그
+cat ~/.claude/scripts/logs/daily-todo-launchd.out.log
+cat ~/.claude/scripts/logs/daily-todo-launchd.err.log
 
 # 수동으로 스크립트 직접 실행
 ~/.claude/scripts/daily-todo.sh
+
+# launchd로 즉시 트리거 (테스트)
+launchctl kickstart -k gui/$(id -u)/com.user.daily-todo
 ```
 
 ---
@@ -275,28 +320,39 @@ claude --version
 | Slack | 메시지 검색 | O |
 | Google Calendar | 일정 조회 | O |
 
-### cron 실행 시 주의사항
+### launchd 실행 시 주의사항
 
 - `daily-todo.sh`는 `--dangerously-skip-permissions` 플래그를 사용합니다 (비대화형 환경에서 MCP 도구 승인 프롬프트를 건너뛰기 위함)
-- Mac이 절전/종료 상태이면 cron이 실행되지 않습니다 — 09시에 Mac이 켜져 있어야 합니다
+- Mac이 절전/종료 상태이면 예약된 시간에 실행되지 않지만, **launchd는 깨어난 직후 1회 따라잡기 실행**을 합니다 (cron과 다른 점)
 - 로그 파일은 7일 후 자동 삭제됩니다
 
 ---
 
 ## 트러블슈팅
 
-### cron이 실행되지 않음
+### launchd가 실행되지 않음
 
 ```bash
-# cron 등록 확인
-crontab -l
+# 등록 상태 확인 — 두 번째 컬럼이 마지막 exit code (0이면 정상)
+launchctl list | grep daily-todo
 
-# Mac 터미널에 전체 디스크 접근 권한 확인
-# 시스템 설정 > 개인 정보 보호 및 보안 > 전체 디스크 접근 > cron 허용
+# 즉시 트리거하여 동작 확인
+launchctl kickstart -k gui/$(id -u)/com.user.daily-todo
 
-# 수동 실행으로 오류 확인
+# 스크립트 단독 실행 (스크립트 자체의 오류 분리)
 ~/.claude/scripts/daily-todo.sh
+
+# launchd 시스템 로그
+log show --predicate 'subsystem == "com.apple.xpc.launchd"' --last 1h | grep daily-todo
 ```
+
+자주 막히는 지점:
+
+| 증상 | 원인 | 해결 |
+|------|------|------|
+| `Not logged in · Please run /login` | Keychain 접근 불가 환경에서 실행됨 (cron 등) | LaunchAgent로 등록 (사용자 GUI 세션에서 실행) |
+| plist 수정 후 반영 안 됨 | `launchctl unload`/`load` 누락 | `unload` → 편집 → `load` 재실행 |
+| `launchctl list`에 안 보임 | plist 문법 오류 | `plutil -lint <plist>`로 검사 |
 
 ### MCP 도구 에러
 
