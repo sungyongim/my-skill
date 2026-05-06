@@ -10,10 +10,12 @@
 |------|------|--------------|
 | [skill-my-todo](./skill-my-todo/) | 멀티 플랫폼 검색 기반 오늘의 할일 자동 생성 | `/skill-my-todo` |
 | [skill-summary-team-weekly](./skill-summary-team-weekly/) | 핀테크트라이브 개발/기획 위클리 통합 요약 및 Confluence 업로드 자동화 | `/summary-team-weekly` |
+| [skill-stock](./skill-stock/) | 보유 주식 4소스 종합분석(뉴스·시세·펀더·공시) 매매전략 즉시 생성 및 Notion 작성 | `/skill-stock` |
 
 ## 사전 요구 사항
 
 - [Claude Code CLI](https://claude.com/claude-code) 설치
-- Atlassian (Jira, Confluence) MCP 서버 연결
-- Slack MCP 서버 연결
-- Google Calendar MCP 서버 연결
+- Atlassian (Jira, Confluence) MCP 서버 연결 — `skill-my-todo`, `skill-summary-team-weekly`
+- Slack MCP 서버 연결 — `skill-my-todo`, `skill-summary-team-weekly`
+- Google Calendar MCP 서버 연결 — `skill-my-todo`
+- Notion MCP 서버 연결 — `skill-stock`
